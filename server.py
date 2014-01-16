@@ -22,6 +22,8 @@ while True:
     #send a response
     c.send('HTTP/1.0 200 OK\r\n')
     c.send('Content-type: text/html\r\n')
-    c.send('<h1>Hello, world.')
+    c.send('\r\n') # @NCR this line creates a division between the meta-data
+    		   # and the payload allowing the payload to display
+    c.send('<h1>Hello, world.</h1>') # @NCR added an end tag for the h1 tag
     c.send('This is ctb\'s Web server.')
     c.close()
