@@ -44,8 +44,11 @@ def handle_get(conn, path):
         conn.send('</html></body>')
 
 def handle_post(conn):
-    conn.send('HTTP/1.0 200 OK\r\n\r\n')
+    conn.send('HTTP/1.0 200 OK\r\n')
+    conn.send('Content-type: text/html\r\n\r\n')
+    conn.send('<html><body>')
     conn.send('Hello World')
+    conn.send('</html></body>')
 
 def handle_connection(conn):
     req = conn.recv(1000)

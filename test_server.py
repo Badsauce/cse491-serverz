@@ -84,3 +84,15 @@ def test_handle_connection_file():
     server.handle_connection(conn)
 
     assert conn.sent == expected_return, 'Got: %s' % (repr(conn.sent),)
+
+def test_handle_connection_post():
+    conn = FakeConnection("POST /file HTTP/1.0\r\n\r\n")
+    expected_return = "HTTP/1.0 200 OK\r\n"\
+		    +"Content-type: text/html\r\n\r\n"\
+		    +"<html><body>"\
+		    +"Hello World"\
+		    +"</html></body>"
+
+    server.handle_connection(conn)
+
+    assert conn.sent == expected_return, 'Got: %s' % (repr(conn.sent),)
