@@ -4,108 +4,65 @@ import socket
 import time
 import urlparse
 import cgi
+import jinja2
 
-from mimetools import Message
 from StringIO import StringIO
 
-def handle_submit(conn,url):
+def handle_submit(conn,url,env):
     query = urlparse.parse_qs(url.query)
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send("Hello Mr. ")
-    conn.send(query['firstname'][0])
-    conn.send(" ")
-    conn.send(query['lastname'][0])
-    conn.send('.')
-    conn.send('</html></body>')
-
-def handle_form(conn,url):
+    vars = dict(firstname = query['firstname'][0],lastname = query['lastname'][0])
+    conn.send(env.get_template("submit.html").render(vars))
+def handle_form(conn,url,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send("<form action='/submit' method='POST'")
-    conn.send('enctype="multipart/form-data"')
-    conn.send(">")
-    conn.send("First name:")
-    conn.send("<input type='text' name='firstname'>")
-    conn.send("Last name:")
-    conn.send("<input type='text' name='lastname'>")
-    conn.send("<input type='submit'>")
-    conn.send("</form>")
-    conn.send('</html></body>')
+    conn.send(env.get_template('form.html').render())
 
-def handle_root(conn, url):
+def handle_root(conn, url,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send('<h1>Hello, world.</h1>')
-    conn.send("This is rutowsk1's Web server.<br>")
-    conn.send("<a href='/content'>Content</a><br>")
-    conn.send("<a href='/file'>Files</a><br>")
-    conn.send("<a href='/image'>Images</a>")
-    conn.send('</html></body>')
+    conn.send(env.get_template('index.html').render())
 
-def handle_content(conn, url):
+def handle_content(conn, url,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send('<h1>Content Page</h1>')
-    conn.send('Stuff about things')
-    conn.send('</html></body>')
+    conn.send(env.get_template('content.html').render())
 
-def handle_file(conn, url):
+def handle_file(conn, url,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send('<h1>File Page</h1>')
-    conn.send('Files')
-    conn.send('</html></body>')
-
-def handle_image(conn, url):
+    conn.send(env.get_template('file.html').render())
+def handle_image(conn, url,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send('<h1>Image Page</h1>')
-    conn.send('Images')
-    conn.send('</html></body>')
-
-def handle_404(conn, url):
+    conn.send(env.get_template('image.html').render())
+def handle_404(conn, url, env):
     conn.send('HTTP/1.0 404 Not Found\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send('<h1>404</h1>')
-    conn.send('This page does not exist')
-    conn.send('</html></body>')
+    conn.send(env.get_template("404.html").render())
 
-def handle_get(conn, url):
+def handle_get(conn, url, env):
     path = url.path
     if path == '/':
-        handle_root(conn,url)
+        handle_root(conn,url,env)
     elif path == '/form':
-        handle_form(conn,url)
+        handle_form(conn,url,env)
     elif path == '/submit':
-        handle_submit(conn,url)
+        handle_submit(conn,url,env)
     elif path == '/content':
-        handle_content(conn, url)
+        handle_content(conn, url,env)
     elif path == '/file':
-        handle_file(conn, url)
+        handle_file(conn, url,env)
     elif path == '/image':
-        handle_image(conn, url)
+        handle_image(conn, url,env)
     else:
-        handle_404(conn, url)
+        handle_404(conn,url,env)
 
-def handle_post(conn,content):
+def handle_post(conn,content,env):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
-    conn.send('<html><body>')
-    conn.send("Hello Mr. ")
-    conn.send(content['firstname'])
-    conn.send(" ")
-    conn.send(content['lastname'])
-    conn.send('.')
-    conn.send('</html></body>')
-
+    conn.send(env.get_template("submit.html").render(content))
 def read_head(conn):
     message = ''
     while '\r\n\r\n' not in message:
@@ -113,6 +70,10 @@ def read_head(conn):
     return message.rstrip()
 
 def handle_connection(conn):
+    loader = jinja2.FileSystemLoader('./templates')
+    env = jinja2.Environment(loader=loader)
+
+
     rawHead = read_head(conn)
     headList = rawHead.split('\r\n')
     contentType = [s for s in headList if 'Content-Type' in s]
@@ -121,7 +82,7 @@ def handle_connection(conn):
     if reqType == 'GET':
         path = req[1]
         url = urlparse.urlparse(path)
-        handle_get(conn, url)
+        handle_get(conn, url, env)
     elif reqType == 'POST':
         requestLine, raw_headers = rawHead.split('\r\n',1)
         headers = raw_headers.split('\r\n')
@@ -147,7 +108,7 @@ def handle_connection(conn):
             content = {}
             content['firstname'] = form['firstname'].value
             content['lastname'] = form['lastname'].value
-        handle_post(conn,content)
+        handle_post(conn,content,env)
     conn.close()
 
 def main():
