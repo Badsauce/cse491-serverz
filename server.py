@@ -3,6 +3,10 @@ import random
 import socket
 import time
 import urlparse
+import cgi
+
+from mimetools import Message
+from StringIO import StringIO
 
 def handle_submit(conn,url):
     query = urlparse.parse_qs(url.query)
@@ -20,7 +24,9 @@ def handle_form(conn,url):
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
     conn.send('<html><body>')
-    conn.send("<form action='/submit' method='POST'>")
+    conn.send("<form action='/submit' method='POST'")
+    conn.send('enctype="multipart/form-data"')
+    conn.send(">")
     conn.send("First name:")
     conn.send("<input type='text' name='firstname'>")
     conn.send("Last name:")
@@ -90,28 +96,57 @@ def handle_get(conn, url):
         handle_404(conn, url)
 
 def handle_post(conn,content):
-    query = urlparse.parse_qs(content)
     conn.send('HTTP/1.0 200 OK\r\n')
     conn.send('Content-type: text/html\r\n\r\n')
     conn.send('<html><body>')
     conn.send("Hello Mr. ")
-    conn.send(query['firstname'][0])
+    conn.send(content['firstname'])
     conn.send(" ")
-    conn.send(query['lastname'][0])
+    conn.send(content['lastname'])
     conn.send('.')
     conn.send('</html></body>')
 
+def read_head(conn):
+    message = ''
+    while '\r\n\r\n' not in message:
+        message += conn.recv(1)
+    return message.rstrip()
+
 def handle_connection(conn):
-    req = conn.recv(1000)
-    lineSplit = req.split('\r\n')
-    req = lineSplit[0].split(' ')
+    rawHead = read_head(conn)
+    headList = rawHead.split('\r\n')
+    contentType = [s for s in headList if 'Content-Type' in s]
+    req = headList[0].split(' ')
     reqType = req[0]
     if reqType == 'GET':
         path = req[1]
         url = urlparse.urlparse(path)
         handle_get(conn, url)
     elif reqType == 'POST':
-        content = lineSplit[-1]
+        requestLine, raw_headers = rawHead.split('\r\n',1)
+        headers = raw_headers.split('\r\n')
+
+        headDict = {}
+        for line in headers:
+            k, v = line.split(': ', 1)
+            headDict[k.lower()] = v
+
+        content = conn.recv(int(headDict['content-length']))
+        contentType = headDict['content-type']
+
+        if contentType == 'application/x-www-form-urlencoded':
+            content = urlparse.parse_qs(content)
+            content['firstname'] = content['firstname'][0]
+            content['lastname'] = content['lastname'][0]
+        elif 'multipart/form-data' in contentType:
+            environ = {}
+            environ['REQUEST_METHOD'] = 'POST'
+
+            form = cgi.FieldStorage(headers=headDict, fp=StringIO(content), environ=environ)
+
+            content = {}
+            content['firstname'] = form['firstname'].value
+            content['lastname'] = form['lastname'].value
         handle_post(conn,content)
     conn.close()
 
@@ -132,7 +167,6 @@ def main():
         c, (client_host, client_port) = s.accept()
         print 'Got connection from', client_host, client_port
         handle_connection(c)
-        
 
 if __name__ == "__main__":
     main()
