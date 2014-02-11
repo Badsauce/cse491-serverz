@@ -3,10 +3,15 @@ import random
 import socket
 import time
 import urlparse
-import cgi
 import jinja2
 
+from cgi import parse_qs, escape
+
 from StringIO import StringIO
+
+from wsgiref.simple_server import make_server
+
+from refapp import make_app
 
 def handle_submit(conn,url,env):
     query = urlparse.parse_qs(url.query)
@@ -112,22 +117,13 @@ def handle_connection(conn):
     conn.close()
 
 def main():
-    s = socket.socket()         # Create a socket object
+    the_wsgi_app = make_app()
+
     host = socket.getfqdn() # Get local machine name
     port = random.randint(8000, 9999)
-    s.bind((host, port))        # Bind to the port
-
-    print 'Starting server on', host, port
-    print 'The Web server URL for this would be http://%s:%d/' % (host, port)
-
-    s.listen(5)                 # Now wait for client connection.
-
-    print 'Entering infinite loop; hit CTRL-C to exit'
-    while True:
-        # Establish connection with client.    
-        c, (client_host, client_port) = s.accept()
-        print 'Got connection from', client_host, client_port
-        handle_connection(c)
+    httpd = make_server('', port, the_wsgi_app)
+    print "Serving at http://%s:%d/..." % (host, port,)
+    httpd.serve_forever()
 
 if __name__ == "__main__":
     main()
