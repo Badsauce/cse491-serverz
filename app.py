@@ -9,17 +9,12 @@ def base_app(environ, start_response):
 def make_app():
     return base_app
 
-def handle_post(environ, start_response, jinja):
-    conn.send('HTTP/1.0 200 OK\r\n')
-    conn.send('Content-type: text/html\r\n\r\n')
-    conn.send(env.get_template("submit.html").render(content))
 def handle_submit(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    #query = urlparse.parse_qs(url.query)
     path = environ.get('PATH_INFO', '')
     method = environ.get('REQUEST_METHOD','')
     content_type = environ.get('CONTENT_TYPE', '')
-    if "multipart" in content_type or content_type == "application/x-www-form-urlencoded":
+    if method == "POST":
         stream = environ.get('wsgi.input','')
         form = FieldStorage(fp=stream, environ=environ)
         params = {}
@@ -30,31 +25,38 @@ def handle_submit(environ, start_response, jinja):
         params = {}
         params['firstname'] = query['firstname'][0]
         params['lastname'] = query['lastname'][0]
+    params['title'] = "Results"
     return jinja.get_template("submit.html").render(params)
 
 def handle_form(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return jinja.get_template('form.html').render()
+    params = {'title':'Super Cool Form Page'}
+    return jinja.get_template('form.html').render(params)
 
 def handle_root(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return jinja.get_template('index.html').render()
+    params = {'title':'Welcome to Zombo.com (this is not Zombo.com)'}
+    return jinja.get_template('index.html').render(params)
 
 def handle_content(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return jinja.get_template('content.html').render()
+    params = {'title':'Content-ish'}
+    return jinja.get_template('content.html').render(params)
 
 def handle_file(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return jinja.get_template('file.html').render()
+    params = {'title':'Files and stuff'}
+    return jinja.get_template('file.html').render(params)
 
 def handle_image(environ, start_response, jinja):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return jinja.get_template('image.html').render()
+    params = {'title':'Kind-of an image'}
+    return jinja.get_template('image.html').render(params)
 
 def handle_404(environ, start_response, jinja):
     start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
-    return jinja.get_template("404.html").render()
+    params = {'title':'Son, are you lost!?'}
+    return jinja.get_template("404.html").render(params)
 
 def handle_connection(environ,start_response):
     loader = jinja2.FileSystemLoader('./templates')
@@ -77,4 +79,4 @@ def handle_connection(environ,start_response):
         content = handle_404(environ, start_response, jinja)
     # flatten content form unicode to a string
     content = content.encode('latin-1', 'replace')
-    return content
+    return [content]
