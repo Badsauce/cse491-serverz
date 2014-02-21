@@ -2,10 +2,12 @@
 import random
 import socket
 import time
+import sys
 from urlparse import urlparse
 from StringIO import StringIO
 
 from app import make_app
+from wsgiref.validate import validator
 
 def handle_connection(conn):
     # Start reading in data from the connection
@@ -21,15 +23,23 @@ def handle_connection(conn):
     for line in data.split('\r\n')[:-2]:
         k, v = line.split(': ', 1)
         headers[k.lower()] = v
-        
+
     # Parse out the path and related info
     path = urlparse(req.split(' ', 3)[1])
     env['REQUEST_METHOD'] = 'GET'
     env['PATH_INFO'] = path[2]
     env['QUERY_STRING'] = path[4]
     env['CONTENT_TYPE'] = 'text/html'
-    env['CONTENT_LENGTH'] = 0
+    env['CONTENT_LENGTH'] = '0'
     env['SCRIPT_NAME'] = ''
+    env['SERVER_NAME'] = 'Totally Cool Server'
+    env['SERVER_PORT'] = conn.getsockname()[0]
+    env['wsgi.version'] = (1, 0)
+    env['wsgi.errors'] = sys.stderr
+    env['wsgi.multithread'] = False
+    env['wsgi.multiprocess'] = False
+    env['wsgi.run_once'] = False
+    env['wsgi.url_scheme'] = 'http'
 
     def start_response(status, response_headers):
         conn.send('HTTP/1.0 ')
@@ -52,6 +62,7 @@ def handle_connection(conn):
 
     env['wsgi.input'] = StringIO(content)
     appl = make_app()
+    //validator_app = validator(appl)
     result = appl(env, start_response)
     for data in result:
         conn.send(data)

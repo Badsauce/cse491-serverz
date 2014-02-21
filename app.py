@@ -44,14 +44,24 @@ def handle_content(environ, start_response, jinja):
     return jinja.get_template('content.html').render(params)
 
 def handle_file(environ, start_response, jinja):
-    start_response('200 OK', [('Content-Type', 'text/html')])
-    params = {'title':'Files and stuff'}
-    return jinja.get_template('file.html').render(params)
+    fp = open("sampletxt.txt","rb")
+    data = fp.read()
+    fp.close
+    env = {}
+    env= [('Content-Length', str(len(data))),('Content-Type', 'text/plain')]
+    start_response('200 OK', env)
+
+    return data;
 
 def handle_image(environ, start_response, jinja):
-    start_response('200 OK', [('Content-Type', 'text/html')])
-    params = {'title':'Kind-of an image'}
-    return jinja.get_template('image.html').render(params)
+    fp = open("pic.jpg","rb")
+    data = fp.read()
+    fp.close
+    env = {}
+    env= [('Content-Length', str(len(data))),('Content-Type', 'image/jpeg')]
+    start_response('200 OK', env)
+
+    return data;
 
 def handle_404(environ, start_response, jinja):
     start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
@@ -62,6 +72,8 @@ def handle_connection(environ,start_response):
     loader = jinja2.FileSystemLoader('./templates')
     jinja = jinja2.Environment(loader=loader)
 
+    encodeFlag = True;
+
     path = environ.get('PATH_INFO', '')
     if path == '/':
         content = handle_root(environ, start_response, jinja)
@@ -69,8 +81,10 @@ def handle_connection(environ,start_response):
         content = handle_content(environ, start_response, jinja)
     elif path == '/image':
         content = handle_image(environ, start_response, jinja)
+        encodeFlag = False;
     elif path == '/file':
         content = handle_file(environ, start_response, jinja)
+        encodeFlag = False;
     elif path == '/form':
         content = handle_form(environ, start_response, jinja)
     elif "/submit" in path:
@@ -78,5 +92,6 @@ def handle_connection(environ,start_response):
     else:
         content = handle_404(environ, start_response, jinja)
     # flatten content form unicode to a string
-    content = content.encode('latin-1', 'replace')
+    if encodeFlag:
+        content = content.encode('latin-1', 'replace')
     return [content]
