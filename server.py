@@ -3,6 +3,11 @@ import random
 import socket
 import time
 import sys
+import Cookie
+import quixote
+import imageapp
+
+#from quixote.demo.altdemo import create_publisher
 from urlparse import urlparse
 from StringIO import StringIO
 
@@ -40,6 +45,7 @@ def handle_connection(conn):
     env['wsgi.multiprocess'] = False
     env['wsgi.run_once'] = False
     env['wsgi.url_scheme'] = 'http'
+    env['HTTP_COOKIE'] = headers['cookie']
 
     def start_response(status, response_headers):
         conn.send('HTTP/1.0 ')
@@ -61,15 +67,18 @@ def handle_connection(conn):
             content += conn.recv(1)
 
     env['wsgi.input'] = StringIO(content)
-    appl = make_app()
-    //validator_app = validator(appl)
-    result = appl(env, start_response)
+    qx_app = quixote.get_wsgi_app()
+    #appl = make_app()
+    #validator_app = validator(appl)
+    result = qx_app(env, start_response)
     for data in result:
         conn.send(data)
 
     conn.close()
 
 def main():
+    imageapp.setup()
+    p = imageapp.create_publisher()
     s = socket.socket()         # Create a socket object
     host = socket.getfqdn() # Get local machine name
     port = random.randint(8000, 9999)
