@@ -8,6 +8,8 @@ import Cookie
 import quixote
 import imageapp
 import quixote.demo.altdemo
+import chatapp
+import quoteapp
 
 #from quixote.demo.altdemo import create_publisher
 from urlparse import urlparse
@@ -47,7 +49,10 @@ def handle_connection(conn,application):
     env['wsgi.multiprocess'] = False
     env['wsgi.run_once'] = False
     env['wsgi.url_scheme'] = 'http'
-    env['HTTP_COOKIE'] = headers['cookie']
+    try:
+        env['HTTP_COOKIE'] = headers['cookie']
+    except:
+        env['HTTP_COOKIE'] = ''
 
     def start_response(status, response_headers):
         conn.send('HTTP/1.0 ')
@@ -99,6 +104,10 @@ def main():
         wsgi_app = quixote.get_wsgi_app()
     elif args.A == "myapp":
         wsgi_app = make_app()
+    elif args.A == "chat":
+        wsgi_app = chatapp.ChatApp('./chat/html')
+    elif args.A == "quotes":
+        wsgi_app = quoteapp.QuotesApp('quotes/quotes.txt','./quotes/html')
     else:
         print "App not found"
         return -1;

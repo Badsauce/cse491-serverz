@@ -1,4 +1,17 @@
-2012-01-21
+2014-04-03
+
+ * attended phillip hallers talks
+ * implemented the image app in django located in the cse491_django repo
+
+2014-03-26
+
+ * added grapes.css with minimum enthuiasm and problem solving skills
+
+2014-03-20
+
+ * setup imageapp on digital ocean, see blog post at http://mage.paladinmagelabs.com/post/80133566832/quick-and-dirty-uwsgi-setup-on-digital-ocean
+
+2014-01-21
 
  * added responses for different GET requests
  * added a default response for POST requests

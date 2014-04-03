@@ -63,6 +63,16 @@ def handle_image(environ, start_response, jinja):
 
     return data;
 
+def handle_grapes(environ, start_response, jinja):
+    fp = open("templates/grapes.css","rb")
+    data = fp.read()
+    fp.close
+    env = {}
+    env= [('Content-Length', str(len(data))),('Content-Type', 'text/css')]
+    start_response('200 OK', env)
+
+    return data;
+
 def handle_404(environ, start_response, jinja):
     start_response('404 NOT FOUND', [('Content-Type', 'text/html')])
     params = {'title':'Son, are you lost!?'}
@@ -89,6 +99,8 @@ def handle_connection(environ,start_response):
         content = handle_form(environ, start_response, jinja)
     elif "/submit" in path:
         content = handle_submit(environ, start_response, jinja)
+    elif "/grapes.css":
+        content = handle_grapes(environ, start_response, jinja)
     else:
         content = handle_404(environ, start_response, jinja)
     # flatten content form unicode to a string
