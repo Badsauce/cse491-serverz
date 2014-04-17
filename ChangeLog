@@ -1,3 +1,17 @@
+2014-04-16
+
+ * Attended MSU Hackathon and Updated an open source project to a wsgi app
+   for icer repo at https://github.com/Badsauce/gitlab-commit-trello-comment
+ * Django app supports jpeg and tiff formats
+
+2014-04-09
+
+ * added support for the cookie App to server.py
+ * configured a Ghost blog on Digital Ocean Droplet
+ * pointed my domain registar to Digital Ocean's name servers
+ * setup paladinmagelabs.com to point to my Ghsot blog (will change to blog.paladinmagelabs.com once I setup a django app for my main site.)
+ * sqlite support on my django app at cse491_django
+
 2014-04-03
 
  * attended phillip hallers talks

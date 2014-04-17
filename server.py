@@ -10,6 +10,7 @@ import imageapp
 import quixote.demo.altdemo
 import chatapp
 import quoteapp
+import cookieapp
 
 #from quixote.demo.altdemo import create_publisher
 from urlparse import urlparse
@@ -108,6 +109,8 @@ def main():
         wsgi_app = chatapp.ChatApp('./chat/html')
     elif args.A == "quotes":
         wsgi_app = quoteapp.QuotesApp('quotes/quotes.txt','./quotes/html')
+    elif args.A == "cookie":
+        wsgi_app = cookieapp.wsgi_app
     else:
         print "App not found"
         return -1;
